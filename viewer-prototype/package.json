@@ -20,7 +20,8 @@
     "react-chartjs-2": "^2.7.2",
     "ag-grid-community": "^19.0.0",
     "ag-grid-react": "^19.0.0",
-    "tsp-typescript-client": "git+ssh://git@github.com:theia-ide/tsp-typescript-client.git"
+    "timeline-chart": "next",
+    "tsp-typescript-client": "https://github.com/theia-ide/tsp-typescript-client"
   },
   "devDependencies": {
     "@types/chart.js": "^2.7.40",

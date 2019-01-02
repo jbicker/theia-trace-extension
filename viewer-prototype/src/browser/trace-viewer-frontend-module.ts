@@ -23,6 +23,7 @@ import { CommandContribution } from '@theia/core/lib/common';
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import '../../src/browser/style/trace-viewer.css';
+import '../../src/browser/style/timegraph.css';
 
 export default new ContainerModule(bind => {
     bind(TraceViewerWidget).toSelf();

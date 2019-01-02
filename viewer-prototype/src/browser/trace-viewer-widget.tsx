@@ -30,6 +30,7 @@ import { TimeGraphModel, TimeGraphEntry } from 'tsp-typescript-client/lib/models
 import { XYSeries } from 'tsp-typescript-client/lib/models/xy';
 import { ResponseStatus } from 'tsp-typescript-client/lib/models/response/responses';
 import { QueryHelper } from 'tsp-typescript-client/lib/models/query/query-helper';
+import { TimeGraphView } from './timegraph-view/timegraph-view';
 
 export const TraceViewerWidgetOptions = Symbol('TraceViewerWidgetOptions');
 export interface TraceViewerWidgetOptions {
@@ -109,6 +110,7 @@ export class TraceViewerWidget extends ReactWidget {
                 <textarea cols={50} rows={20} value={this.timeGraphTree}></textarea>
                 <textarea cols={100} rows={20} value={this.timeGraphState}></textarea>
             </div>
+            {this.renderTimeGraphMain()}
             <div className='xy-info'>
                 {this.renderLineChart()}
             </div>
@@ -116,6 +118,13 @@ export class TraceViewerWidget extends ReactWidget {
                 {this.renderEventsTable()}
             </div>
         </div>;
+    }
+
+    protected renderTimeGraphMain() {
+        const timeGraphView = new TimeGraphView();
+        return <div id='timegraph-main' className='ps__child--consume' onWheel={ev=>{ev.preventDefault(); ev.stopPropagation();}}>
+            {timeGraphView.renderTimeGraphChart()}
+        </div>
     }
 
     protected renderTraceInfo(): React.ReactNode {
