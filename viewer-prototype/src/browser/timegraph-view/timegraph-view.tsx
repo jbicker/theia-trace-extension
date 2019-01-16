@@ -6,6 +6,7 @@ import { TimeGraphAxis } from 'timeline-chart/lib/layer/time-graph-axis';
 import { TimeGraphAxisCursors } from 'timeline-chart/lib/layer/time-graph-axis-cursors';
 import { TimeGraphChartGrid } from 'timeline-chart/lib/layer/time-graph-chart-grid';
 import { TimeGraphChart } from 'timeline-chart/lib/layer/time-graph-chart';
+// import { TimeGraphChartArrows } from 'timeline-chart/lib/layer/time-graph-chart-arrows'
 import { TimeGraphChartCursors } from 'timeline-chart/lib/layer/time-graph-chart-cursors';
 import { TimeGraphChartSelectionRange } from 'timeline-chart/lib/layer/time-graph-chart-selection-range';
 import { TimeGraphNavigator } from 'timeline-chart/lib/layer/time-graph-navigator';
@@ -33,21 +34,34 @@ export class TimeGraphView {
     protected timeGraphData: TimeGraphModel;
 
     protected chartLayer: TimeGraphChart;
+    // protected arrows: TimeGraphChartArrows;
     protected vscrollLayer: TimeGraphVerticalScrollbar;
 
     protected styleMap = new Map<string, TimeGraphRowElementStyle>();
 
     constructor() {
         this.dataProvider = new TestDataProvider(this.styleConfig.mainWidth);
-        this.timeGraphData = this.dataProvider.getData();
+        this.timeGraphData = this.dataProvider.getData({});
         this.unitController = new TimeGraphUnitController(this.timeGraphData.totalRange);
+        this.unitController.numberTranslator = (theNumber: number) => {
+            const milli = Math.floor(theNumber / 1000000);
+            const micro = Math.floor((theNumber % 1000000) / 1000);
+            const nano = Math.floor((theNumber % 1000000) % 1000);
+            return milli + ':' + micro + ':' + nano;
+        };
 
         this.totalHeight = this.timeGraphData.rows.length * this.rowHeight;
         this.rowController = new TimeGraphRowController(this.rowHeight, this.totalHeight);
 
         const providers = {
             dataProvider: (range: TimeGraphRange, resolution: number) => {
-                this.timeGraphData = this.dataProvider.getData(range);
+                const length = range.end - range.start;
+                const overlap = ((length * 5) - length) / 2;
+                const start = range.start - overlap > 0 ? range.start - overlap : 0;
+                const end = range.end + overlap < this.unitController.absoluteRange ? range.end + overlap : this.unitController.absoluteRange;
+                const newRange: TimeGraphRange = { start, end };
+                const newResolution: number = resolution * 0.8;
+                this.timeGraphData = this.dataProvider.getData({ range: newRange, resolution: newResolution });
                 if (selectedElement) {
                     for (const row of this.timeGraphData.rows) {
                         const selEl = row.states.find(el => el.id === selectedElement.id);
@@ -59,7 +73,8 @@ export class TimeGraphView {
                 }
                 return {
                     rows: this.timeGraphData.rows,
-                    range
+                    range: newRange,
+                    resolution: newResolution
                 };
             },
             rowElementStyleProvider: (model: TimeGraphRowElementModel) => {
@@ -107,7 +122,9 @@ export class TimeGraphView {
             if (el) {
                 selectedElement = el;
             }
-        })
+        });
+        // this.arrows = new TimeGraphChartArrows('timeGraphChartArrows', this.rowController);
+        // this.arrows.addArrows(timeGraph.arrows);
         this.vscrollLayer = new TimeGraphVerticalScrollbar('timeGraphVerticalScrollbar', this.rowController);
     }
 
@@ -142,12 +159,6 @@ export class TimeGraphView {
 
     protected getAxisLayer() {
         const timeAxisLayer = new TimeGraphAxis('timeGraphAxis', { color: this.styleConfig.naviBackgroundColor });
-        timeAxisLayer.registerNumberTranslator((theNumber: number) => {
-            const milli = Math.floor(theNumber / 1000000);
-            const micro = Math.floor((theNumber % 1000000) / 1000);
-            const nano = Math.floor((theNumber % 1000000) % 1000);
-            return milli + ':' + micro + ':' + nano;
-        });
         return timeAxisLayer;
     }
 
@@ -159,7 +170,7 @@ export class TimeGraphView {
         const grid = new TimeGraphChartGrid('timeGraphGrid', this.rowHeight);
 
         const cursors = new TimeGraphChartCursors('chart-cursors', this.chartLayer, this.rowController, { color: this.styleConfig.cursorColor });
-        const selectionRange = new TimeGraphChartSelectionRange('chart-selection-range', { color: this.styleConfig.cursorColor } );
+        const selectionRange = new TimeGraphChartSelectionRange('chart-selection-range', { color: this.styleConfig.cursorColor });
 
         return <ReactTimeGraphContainer
             options={
