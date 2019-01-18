@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { TimeGraphContainer, TimeGraphContainerOptions } from 'timeline-chart/lib/time-graph-container';
 import { TimeGraphUnitController } from 'timeline-chart/lib/time-graph-unit-controller';
-import { TimeGraphModel, TimeGraphRowElementModel, TimeGraphRowModel, TimeGraphRange } from 'timeline-chart/lib/time-graph-model';
 import { TimeGraphAxis } from 'timeline-chart/lib/layer/time-graph-axis';
 import { TimeGraphAxisCursors } from 'timeline-chart/lib/layer/time-graph-axis-cursors';
 import { TimeGraphChartGrid } from 'timeline-chart/lib/layer/time-graph-chart-grid';
@@ -13,8 +12,11 @@ import { TimeGraphNavigator } from 'timeline-chart/lib/layer/time-graph-navigato
 import { TimeGraphVerticalScrollbar } from 'timeline-chart/lib/layer/time-graph-vertical-scrollbar';
 import { TimeGraphLayer } from 'timeline-chart/lib/layer/time-graph-layer';
 import { TimeGraphRowElementStyle, TimeGraphRowElement } from 'timeline-chart/lib/components/time-graph-row-element';
-import { TestDataProvider } from "./test-data-provider";
 import { TimeGraphRowController } from 'timeline-chart/lib/time-graph-row-controller';
+import { TimelineChart } from 'timeline-chart/lib/time-graph-model';
+// import { TspDataProvider } from './tsp-data-provider';
+import { TspClient } from 'tsp-typescript-client/lib/protocol/tsp-client';
+import { TestDataProvider } from './test-data-provider';
 
 export class TimeGraphView {
 
@@ -26,12 +28,12 @@ export class TimeGraphView {
         cursorColor: 0xb77f09
     }
     protected rowHeight = 16;
-    protected totalHeight: number;
+    protected totalHeight: number = 0;
 
     protected unitController: TimeGraphUnitController;
     protected rowController: TimeGraphRowController;
     protected dataProvider: TestDataProvider;
-    protected timeGraphData: TimeGraphModel;
+    protected timeGraphData?: TimelineChart.TimeGraphModel;
 
     protected chartLayer: TimeGraphChart;
     // protected arrows: TimeGraphChartArrows;
@@ -39,45 +41,45 @@ export class TimeGraphView {
 
     protected styleMap = new Map<string, TimeGraphRowElementStyle>();
 
-    constructor() {
+    constructor(client: TspClient, traceUUID: string) {
+        // this.dataProvider = new TspDataProvider(client, traceUUID, this.styleConfig.mainWidth);
         this.dataProvider = new TestDataProvider(this.styleConfig.mainWidth);
-        this.timeGraphData = this.dataProvider.getData({});
-        this.unitController = new TimeGraphUnitController(this.timeGraphData.totalRange);
-        this.unitController.numberTranslator = (theNumber: number) => {
-            const milli = Math.floor(theNumber / 1000000);
-            const micro = Math.floor((theNumber % 1000000) / 1000);
-            const nano = Math.floor((theNumber % 1000000) % 1000);
-            return milli + ':' + micro + ':' + nano;
-        };
-
-        this.totalHeight = this.timeGraphData.rows.length * this.rowHeight;
+        this.unitController = new TimeGraphUnitController(0);
         this.rowController = new TimeGraphRowController(this.rowHeight, this.totalHeight);
 
         const providers = {
-            dataProvider: (range: TimeGraphRange, resolution: number) => {
-                const length = range.end - range.start;
-                const overlap = ((length * 5) - length) / 2;
-                const start = range.start - overlap > 0 ? range.start - overlap : 0;
-                const end = range.end + overlap < this.unitController.absoluteRange ? range.end + overlap : this.unitController.absoluteRange;
-                const newRange: TimeGraphRange = { start, end };
-                const newResolution: number = resolution * 0.8;
-                this.timeGraphData = this.dataProvider.getData({ range: newRange, resolution: newResolution });
-                if (selectedElement) {
-                    for (const row of this.timeGraphData.rows) {
-                        const selEl = row.states.find(el => el.id === selectedElement.id);
-                        if (selEl) {
-                            selEl.selected = true;
-                            break;
+            dataProvider: async (range: TimelineChart.TimeGraphRange, resolution: number) => {
+                if (this.unitController) {
+                    const length = range.end - range.start;
+                    const overlap = ((length * 5) - length) / 2;
+                    const start = range.start - overlap > 0 ? range.start - overlap : 0;
+                    const end = range.end + overlap < this.unitController.absoluteRange ? range.end + overlap : this.unitController.absoluteRange;
+                    const newRange: TimelineChart.TimeGraphRange = { start, end };
+                    const newResolution: number = resolution * 0.8;
+                    this.timeGraphData = await this.dataProvider.getData({range:newRange});
+                    // this.timeGraphData = await this.dataProvider.getData(newRange);
+                    if (selectedElement) {
+                        for (const row of this.timeGraphData.rows) {
+                            const selEl = row.states.find(el => el.id === selectedElement.id);
+                            if (selEl) {
+                                selEl.selected = true;
+                                break;
+                            }
                         }
                     }
+                    return {
+                        rows: this.timeGraphData.rows,
+                        range: newRange,
+                        resolution: newResolution
+                    };
                 }
                 return {
-                    rows: this.timeGraphData.rows,
-                    range: newRange,
-                    resolution: newResolution
+                    rows: [],
+                    range: { start: 0, end: 0 },
+                    resolution: 0
                 };
             },
-            rowElementStyleProvider: (model: TimeGraphRowElementModel) => {
+            rowElementStyleProvider: (model: TimelineChart.TimeGraphRowElementModel) => {
                 const styles: TimeGraphRowElementStyle[] = [
                     {
                         color: 0x11ad1b,
@@ -105,7 +107,7 @@ export class TimeGraphView {
                     borderWidth: model.selected ? 1 : 0
                 };
             },
-            rowStyleProvider: (row: TimeGraphRowModel) => {
+            rowStyleProvider: (row: TimelineChart.TimeGraphRowModel) => {
                 return {
                     backgroundColor: 0xe0ddcf,
                     backgroundOpacity: row.selected ? 0.6 : 0,
@@ -126,6 +128,22 @@ export class TimeGraphView {
         // this.arrows = new TimeGraphChartArrows('timeGraphChartArrows', this.rowController);
         // this.arrows.addArrows(timeGraph.arrows);
         this.vscrollLayer = new TimeGraphVerticalScrollbar('timeGraphVerticalScrollbar', this.rowController);
+        this.initialize(client, traceUUID);
+    }
+
+    protected async initialize(client: TspClient, traceUUID: string) {
+        this.timeGraphData = await this.dataProvider.getData({});
+        // this.timeGraphData = await this.dataProvider.getData();
+        this.unitController.absoluteRange = this.timeGraphData.totalLength;
+        this.unitController.numberTranslator = (theNumber: number) => {
+            const milli = Math.floor(theNumber / 1000000);
+            const micro = Math.floor((theNumber % 1000000) / 1000);
+            const nano = Math.floor((theNumber % 1000000) % 1000);
+            return milli + ':' + micro + ':' + nano;
+        };
+
+        this.totalHeight = this.timeGraphData.rows.length * this.rowHeight;
+        this.rowController.totalHeight = this.totalHeight;
     }
 
     renderTimeGraphChart(): React.ReactNode {

@@ -15,7 +15,7 @@
     "src"
   ],
   "dependencies": {
-    "@theia/core": "next",
+    "@theia/core": "latest",
     "chart.js": "^2.7.2",
     "react-chartjs-2": "^2.7.2",
     "ag-grid-community": "^19.0.0",

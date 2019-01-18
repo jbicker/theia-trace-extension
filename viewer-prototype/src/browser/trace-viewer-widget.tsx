@@ -121,7 +121,8 @@ export class TraceViewerWidget extends ReactWidget {
     }
 
     protected renderTimeGraphMain() {
-        const timeGraphView = new TimeGraphView();
+        const uuid = this.openedTrace ? this.openedTrace.UUID:'';
+        const timeGraphView = new TimeGraphView(this.tspClient, uuid);
         return <div id='timegraph-main' className='ps__child--consume' onWheel={ev=>{ev.preventDefault(); ev.stopPropagation();}}>
             {timeGraphView.renderTimeGraphChart()}
         </div>
