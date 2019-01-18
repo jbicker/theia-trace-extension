@@ -8,9 +8,9 @@
     "rebuild:electron": "theia rebuild:electron"
   },
   "devDependencies": {
-    "lerna": "2.4.0"
+    "lerna": "2.11.0"
   },
   "workspaces": [
-    "viewer-prototype", "browser-app", "electron-app"
+    "timeline-chart", "tsp-typescript-client", "viewer-prototype", "browser-app", "electron-app"
   ]
 }

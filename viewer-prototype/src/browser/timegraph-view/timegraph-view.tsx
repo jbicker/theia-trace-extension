@@ -32,6 +32,7 @@ export class TimeGraphView {
 
     protected unitController: TimeGraphUnitController;
     protected rowController: TimeGraphRowController;
+    // protected dataProvider: TspDataProvider;
     protected dataProvider: TestDataProvider;
     protected timeGraphData?: TimelineChart.TimeGraphModel;
 
