@@ -5,7 +5,6 @@ import { TimeGraphAxis } from 'timeline-chart/lib/layer/time-graph-axis';
 import { TimeGraphAxisCursors } from 'timeline-chart/lib/layer/time-graph-axis-cursors';
 import { TimeGraphChartGrid } from 'timeline-chart/lib/layer/time-graph-chart-grid';
 import { TimeGraphChart } from 'timeline-chart/lib/layer/time-graph-chart';
-// import { TimeGraphChartArrows } from 'timeline-chart/lib/layer/time-graph-chart-arrows'
 import { TimeGraphChartCursors } from 'timeline-chart/lib/layer/time-graph-chart-cursors';
 import { TimeGraphChartSelectionRange } from 'timeline-chart/lib/layer/time-graph-chart-selection-range';
 import { TimeGraphNavigator } from 'timeline-chart/lib/layer/time-graph-navigator';
@@ -14,9 +13,9 @@ import { TimeGraphLayer } from 'timeline-chart/lib/layer/time-graph-layer';
 import { TimeGraphRowElementStyle, TimeGraphRowElement } from 'timeline-chart/lib/components/time-graph-row-element';
 import { TimeGraphRowController } from 'timeline-chart/lib/time-graph-row-controller';
 import { TimelineChart } from 'timeline-chart/lib/time-graph-model';
+import { TestDataProvider } from './test-data-provider';
 // import { TspDataProvider } from './tsp-data-provider';
 import { TspClient } from 'tsp-typescript-client/lib/protocol/tsp-client';
-import { TestDataProvider } from './test-data-provider';
 
 export class TimeGraphView {
 
@@ -32,8 +31,8 @@ export class TimeGraphView {
 
     protected unitController: TimeGraphUnitController;
     protected rowController: TimeGraphRowController;
-    // protected dataProvider: TspDataProvider;
     protected dataProvider: TestDataProvider;
+    // protected dataProvider: TspDataProvider;
     protected timeGraphData?: TimelineChart.TimeGraphModel;
 
     protected chartLayer: TimeGraphChart;
@@ -43,8 +42,8 @@ export class TimeGraphView {
     protected styleMap = new Map<string, TimeGraphRowElementStyle>();
 
     constructor(client: TspClient, traceUUID: string) {
-        // this.dataProvider = new TspDataProvider(client, traceUUID, this.styleConfig.mainWidth);
         this.dataProvider = new TestDataProvider(this.styleConfig.mainWidth);
+        // this.dataProvider = new TspDataProvider(client, traceUUID, this.styleConfig.mainWidth);
         this.unitController = new TimeGraphUnitController(0);
         this.rowController = new TimeGraphRowController(this.rowHeight, this.totalHeight);
 
@@ -57,7 +56,7 @@ export class TimeGraphView {
                     const end = range.end + overlap < this.unitController.absoluteRange ? range.end + overlap : this.unitController.absoluteRange;
                     const newRange: TimelineChart.TimeGraphRange = { start, end };
                     const newResolution: number = resolution * 0.8;
-                    this.timeGraphData = await this.dataProvider.getData({range:newRange});
+                    this.timeGraphData = await this.dataProvider.getData({ range: newRange });
                     // this.timeGraphData = await this.dataProvider.getData(newRange);
                     if (selectedElement) {
                         for (const row of this.timeGraphData.rows) {
@@ -126,8 +125,6 @@ export class TimeGraphView {
                 selectedElement = el;
             }
         });
-        // this.arrows = new TimeGraphChartArrows('timeGraphChartArrows', this.rowController);
-        // this.arrows.addArrows(timeGraph.arrows);
         this.vscrollLayer = new TimeGraphVerticalScrollbar('timeGraphVerticalScrollbar', this.rowController);
         this.initialize(client, traceUUID);
     }
@@ -142,7 +139,10 @@ export class TimeGraphView {
             const nano = Math.floor((theNumber % 1000000) % 1000);
             return milli + ':' + micro + ':' + nano;
         };
-
+        this.unitController.viewRange = {
+            start: 0,
+            end: this.unitController.absoluteRange
+        }
         this.totalHeight = this.timeGraphData.rows.length * this.rowHeight;
         this.rowController.totalHeight = this.totalHeight;
     }
