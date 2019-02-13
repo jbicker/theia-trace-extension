@@ -26,7 +26,7 @@ import { TraceManager } from '../common/trace-manager';
 import { Trace } from 'tsp-typescript-client/lib/models/trace';
 import { Entry, EntryHeader } from 'tsp-typescript-client/lib/models/entry';
 import { Line } from 'react-chartjs-2';
-import { TimeGraphModel, TimeGraphEntry } from 'tsp-typescript-client/lib/models/timegraph';
+import { TimeGraphEntry } from 'tsp-typescript-client/lib/models/timegraph';
 import { XYSeries } from 'tsp-typescript-client/lib/models/xy';
 import { ResponseStatus } from 'tsp-typescript-client/lib/models/response/responses';
 import { QueryHelper } from 'tsp-typescript-client/lib/models/query/query-helper';
@@ -55,7 +55,7 @@ export class TraceViewerWidget extends ReactWidget {
     private timeGraphView: TimeGraphView | undefined;
     private timeGraphTree: string = '';
     private timeGraphTitle: string = '';
-    private timeGraphState: string = '';
+    // private timeGraphState: string = '';
     private selectedState: TimeGraphRowElement | undefined;
     private hoveredState: TimeGraphRowElement | undefined;
 
@@ -107,7 +107,7 @@ export class TraceViewerWidget extends ReactWidget {
         this.handleResourcesTimeGraph = this.handleResourcesTimeGraph.bind(this);
         this.handleCpuXY = this.handleCpuXY.bind(this);
         return <div className='trace-viewer-container'>
-            <GridLayout className='viewer-grid' cols={1} rowHeight={100} width={1600} draggableHandle={'.widget-handle'}>            
+            <GridLayout className='viewer-grid' cols={1} rowHeight={100} width={1600} draggableHandle={'.widget-handle'}>
                 <div className='trace-info-container' key='trace-info' data-grid={{x: 0, y: 0, w: 1, h: 3}}>
                     {this.renderTraceInfo()}
                 </div>
@@ -120,7 +120,7 @@ export class TraceViewerWidget extends ReactWidget {
                 </div>
                 <div className='timegraph-info' key='time-graph-area' data-grid={{x: 0, y: 0, w: 1, h: 4}}>
                     {this.renderTimeGraph()}
-                </div>            
+                </div>
                 <div className='xy-info' key='xy-area' data-grid={{x: 0, y: 0, w: 1, h: 6}}>
                     {this.renderLineChart()}
                 </div>
@@ -149,7 +149,7 @@ export class TraceViewerWidget extends ReactWidget {
         // if (!this.openedTrace) {
         //     return;
         // }
-        console.log(this.timeGraphState);
+
         return <div className='timegraph-view'>
             <div className='widget-handle'>
                 {this.timeGraphTitle}
@@ -287,12 +287,12 @@ export class TraceViewerWidget extends ReactWidget {
             selectedItems.push(timeGraphEntry.id);
         });
 
-        const statesParameters = QueryHelper.selectionTimeQuery(QueryHelper.splitRangeIntoEqualParts(1332170682440133097, 1332170682540133097, 1165), selectedItems);
-        const stateResponse = await this.tspClient.fetchTimeGraphStates<TimeGraphModel>(this.openedTrace.UUID,
-            'org.eclipse.tracecompass.internal.analysis.os.linux.core.threadstatus.ResourcesStatusDataProvider', statesParameters);
+        // const statesParameters = QueryHelper.selectionTimeQuery(QueryHelper.splitRangeIntoEqualParts(1332170682440133097, 1332170682540133097, 1165), selectedItems);
+        // const stateResponse = await this.tspClient.fetchTimeGraphStates<TimeGraphModel>(this.openedTrace.UUID,
+        //     'org.eclipse.tracecompass.internal.analysis.os.linux.core.threadstatus.ResourcesStatusDataProvider', statesParameters);
 
-        const stateModel = stateResponse.model;
-        this.timeGraphState = JSON.stringify(stateModel);
+        // const stateModel = stateResponse.model;
+        // this.timeGraphState = JSON.stringify(stateModel);
         this.update();
     }
 
